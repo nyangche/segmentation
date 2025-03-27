@@ -3,8 +3,11 @@ from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects
 
 if __name__ == "__main__":
     # 1. Depth Estimation + Object Detection + Filtering
-    analyze = SceneAnalyze("sample/sample.jpg")
+    analyze = SceneAnalyze("Depth-Anything-V2/assets/examples/demo08.jpg") 
+    # 'sample/sample.jpg'->'Depth-Anything-V2/assets/examples/demo05.jpg'
     analyze.run()
+
+    print("[DEBUG] 필터링된 객체 수:", len(analyze.filtered_objects))
 
     # 2. CLIP + DBSCAN Grouping
     grouped_objects = cluster_by_clip_and_dbscan(analyze.filtered_objects)

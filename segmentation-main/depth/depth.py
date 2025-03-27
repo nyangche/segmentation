@@ -6,7 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 
 current_dir = os.path.dirname(__file__)
-depth_anything_path = os.path.join(current_dir, '..', 'Depth-Anything-V2')
+depth_anything_path = os.path.join(current_dir, '..', '..', 'Depth-Anything-V2')
 sys.path.append(os.path.abspath(depth_anything_path))
 
 from depth_anything_v2.dpt import DepthAnythingV2
