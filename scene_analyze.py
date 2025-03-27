@@ -4,6 +4,13 @@ import cv2
 from depth.depth import load_depth_model, infer_depth, save_depth_map
 from object.object import load_yolo, detect_objects, visualize_detections, filter_detections, draw_filtered_objects
 
+"""
+Depth Estimation + Object Detection + Filtering까지 실행
+- Depth: DepthAnythingV2
+- Object Detection: YOLOv8s
+- filtering
+"""
+
 class SceneAnalyze:
     def __init__(self, image_path):
         self.image = cv2.imread(image_path)
