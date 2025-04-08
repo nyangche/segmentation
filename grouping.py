@@ -7,6 +7,8 @@ import cv2
 import os
 import matplotlib.pyplot as plt
 import random
+from sklearn.preprocessing import normalize
+
 
 # CLIP model initialization
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
@@ -22,13 +24,12 @@ def get_clip_embedding(text):
     return embeddings.squeeze().cpu().numpy()  # shape: (512,)
 
 
-def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, eps=1.2, min_samples=2):
-    """
-    CLIP + DBSCAN 기반 의미-거리 그룹화
-    - filtered_objects: 필터링된 객체 리스트
-    - depth_weight: depth 가중치 비율
-    - eps, min_samples: DBSCAN 파라미터
-    """
+def cluster_by_clip_and_dbscan(filtered_objects, image, depth_weight=1.0, eps=3.5, min_samples=2):
+
+    # CLIP + DBSCAN 기반 의미-거리 그룹화
+    # - filtered_objects: 필터링된 객체 리스트
+    # - depth_weight: depth 가중치 비율
+    # - eps, min_samples: DBSCAN 파라미터
 
     # 1. get CLIP embedding
     for obj in filtered_objects:
@@ -37,16 +38,34 @@ def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, eps=1.2, min_
     # 2. 벡터 구성: (center_x, center_y, depth, clip_embed)
     vectors = []
     for obj in filtered_objects:
+        # x, y = obj["center"]
+
+        h, w = image.shape[:2]  
         x, y = obj["center"]
+        x = x / w
+        y = y / h
+
         d = obj["depth"] * depth_weight
+
+        # clip_vec = obj["clip_embed"]
+        # vec = np.concatenate([[x, y, d], clip_vec])
+
         clip_vec = obj["clip_embed"]
+
+        clip_vec = clip_vec / np.linalg.norm(clip_vec) 
+        clip_vec = clip_vec * 10.0  
+
         vec = np.concatenate([[x, y, d], clip_vec])
         vectors.append(vec)
 
     vectors = np.array(vectors)  # shape: (N, 3+512)
 
     # 3. DBSCAN clustering
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(vectors)
+    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(vectors)
+
+    vectors = normalize(vectors)
+    clustering = DBSCAN(eps=0.3, min_samples=min_samples, metric='cosine').fit(vectors)
+
     labels = clustering.labels_
 
     for i, obj in enumerate(filtered_objects):
@@ -55,21 +74,25 @@ def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, eps=1.2, min_
     print(f"DBSCAN + CLIP clustering done: 총 {len(set(labels)) - (1 if -1 in labels else 0)} groups")
     return filtered_objects
 
-def draw_clustered_objects(image, clustered_objects, save_path="output/clustered_result.jpg"):
+
+
+def draw_clustered_objects(image, clustered_objects, save_path="output/clustered_result.jpg", use_instance_color=True):
     image_vis = image.copy()
     color_map = {}
 
-    def get_color(cluster_id):
-        if cluster_id not in color_map:
-            color_map[cluster_id] = [random.randint(0, 255) for _ in range(3)]
-        return color_map[cluster_id]
+    def get_color(key):
+        if key not in color_map:
+            color_map[key] = [random.randint(0, 255) for _ in range(3)]
+        return color_map[key]
 
     for obj in clustered_objects:
         x1, y1, x2, y2 = obj["bbox"]
         cls_name = obj["class_name"]
-        cluster_id = obj["cluster_id"]
-        color = get_color(cluster_id)
-        label = f"[{cluster_id}] {cls_name}"
+        
+        color_key = obj["instance_id"] if use_instance_color and "instance_id" in obj else obj["cluster_id"]
+        color = get_color(color_key)
+        
+        label = f"[{color_key}] {cls_name}"
 
         cv2.rectangle(image_vis, (x1, y1), (x2, y2), color, 2)
         cv2.putText(image_vis, label, (x1, y1 - 10),
