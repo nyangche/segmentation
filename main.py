@@ -1,38 +1,30 @@
 from scene_analyze import SceneAnalyze
-from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects
-from instance_grouping import assign_instance_ids
-import os
-from datetime import datetime
-from summary_utils import save_summary_txt
-
-
-def make_output_folder(base_dir="output"):
-    now = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = os.path.join(base_dir, now)
-    os.makedirs(path, exist_ok=True)
-    return path
-
+from grouping.grouping import cluster_by_clip_and_dbscan, draw_clustered_objects
+from grouping.gnn import gnn_for_grouping
 
 if __name__ == "__main__":
-    output_dir = make_output_folder()
-
     # 1. Depth Estimation + Object Detection + Filtering
-    analyze = SceneAnalyze("sample/example11.jpg", output_dir=output_dir)
+    analyze = SceneAnalyze(r'C:\IoT_project\segmentation_iot-1\dataset\val2017 (1)\val2017\000000577932.jpg') 
+    # 'sample/sample.jpg'->'C:\IoT_project\segmentation_iot-1\dataset\val2017 (1)\val2017\000000577932.jpg'
     analyze.run()
 
+    print("[DEBUG] 필터링된 객체 수:", len(analyze.filtered_objects))
 
     # 2. CLIP + DBSCAN Grouping
-    grouped_objects = cluster_by_clip_and_dbscan(analyze.filtered_objects, analyze.image)
-    draw_clustered_objects(analyze.image, grouped_objects,
-                       save_path=os.path.join(output_dir, "clustered_result.jpg"))
+    grouped_objects = cluster_by_clip_and_dbscan(
+        analyze.filtered_objects,
+        analyze.image,
+        depth_weight=1.0,
+        eps=0.3,
+        min_samples=2
+    )
+    #grouped_objects = gnn_for_grouping(grouped_objects)
+    draw_clustered_objects(analyze.image, grouped_objects)
 
-    # 3. Instance Grouping
-    grouped_with_instance = assign_instance_ids(grouped_objects)
 
-    draw_clustered_objects(analyze.image, grouped_with_instance,
-                       save_path=os.path.join(output_dir, "instance_result.jpg"),
-                       use_instance_color=True)
-
-    # Summary text file 저장
-    summary_path = os.path.join(output_dir, "summary.txt")
-    save_summary_txt(grouped_objects, grouped_with_instance, save_path=summary_path)
+    for obj in grouped_objects:
+        cid = obj["cluster_id"]
+        name = obj["class_name"]
+        depth = obj["depth"]
+        center = obj["center"]
+        print(f"[Cluster {cid}] {name} at {center}, depth={depth:.2f}")

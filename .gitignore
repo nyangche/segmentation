@@ -1,11 +1,3 @@
 # Ignore output images
 output/
 sample/
-gnn/
-grouping/
-transformer/
-dataset/
-coco_150/
-output_gnn/
-output_transformer/
-debug_heatmap/

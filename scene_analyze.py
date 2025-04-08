@@ -12,7 +12,7 @@ Depth Estimation + Object Detection + Filtering까지 실행
 """
 
 class SceneAnalyze:
-    def __init__(self, image_path, output_dir="output"):
+    def __init__(self, image_path):
         self.image = cv2.imread(image_path)
         self.img_path = image_path
         self.depth_model = load_depth_model()
@@ -20,25 +20,20 @@ class SceneAnalyze:
         self.depth_map = None
         self.yolo_results = None
         self.filtered_objects = []
-        self.output_dir = output_dir
 
     def run_depth_estimation(self):
         self.depth_map = infer_depth(self.depth_model, self.image)
-        save_depth_map(self.depth_map, save_path=f"{self.output_dir}/depth_map.png")
+        save_depth_map(self.depth_map)
 
     def run_object_detection(self):
         self.yolo_results = detect_objects(self.yolo_model, self.image)
-        visualize_detections(self.image, self.yolo_results, self.depth_map,
-                         self.yolo_model.names,
-                         save_path=f"{self.output_dir}/depthyolo.jpg")
+        visualize_detections(self.image, self.yolo_results, self.depth_map, self.yolo_model.names)
 
     def filter_objects(self):
         self.filtered_objects = filter_detections(self.yolo_results, self.depth_map, class_names=self.yolo_model.names)
 
     def draw_filtered(self):
-        draw_filtered_objects(self.image, self.filtered_objects, self.yolo_model.names,
-                          save_path=f"{self.output_dir}/filtered_result.jpg")
-
+        draw_filtered_objects(self.image, self.filtered_objects, self.yolo_model.names)
 
     def run(self):
         print(f"Analyzed image: {self.img_path}")
