@@ -85,4 +85,3 @@ def draw_filtered_objects(image, filtered_objects, class_names, save_path="outpu
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     cv2.imwrite(save_path, image_vis)
     print(f"filtered result image saved: {save_path}")
-

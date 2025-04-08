@@ -1,0 +1,38 @@
+# Deep Learning
+torch>=1.12.0
+torchvision>=0.13.0
+ultralytics>=8.0.0
+
+# PyTorch Geometric core libs
+torch-geometric==2.4.0
+torch-scatter==2.1.2
+torch-sparse==0.6.17
+torch-cluster==1.6.1
+torch-spline-conv==1.2.2
+
+# 이미지 처리
+opencv-python
+Pillow
+matplotlib
+
+# 수치 계산
+numpy
+scipy
+
+# 모델 다운로드 및 경로 설정
+tqdm
+requests
+pyyaml
+
+# 자연어 임베딩 (CLIP)
+transformers
+sentencepiece  # 일부 transformers backend에 필요
+
+# 클러스터링
+scikit-learn
+
+# COCO 평가를 위한 pycocotools
+pycocotools
+
+# 개발/디버깅용 (선택)
+jupyter

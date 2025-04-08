@@ -1,28 +1,27 @@
 import numpy as np
 from sklearn.cluster import DBSCAN
-from sklearn.metrics.pairwise import cosine_similarity
 from transformers import CLIPProcessor, CLIPModel
 import torch
 import cv2
 import os
 import matplotlib.pyplot as plt
 import random
+from sklearn.preprocessing import StandardScaler
 
 # CLIP model initialization
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 clip_model.eval()
 
-
 def get_clip_embedding(text):
     """클래스 이름 텍스트 -> CLIP 임베딩 벡터"""
     inputs = clip_processor(text=[text], return_tensors="pt", padding=True)
     with torch.no_grad():
         embeddings = clip_model.get_text_features(**inputs)
-    return embeddings.squeeze().cpu().numpy()  # shape: (512,)
+    vec = embeddings.squeeze().cpu().numpy()  # shape: (512,)
+    return vec / np.linalg.norm(vec)  # ✅ 정규화 추가
 
-
-def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, eps=1.2, min_samples=2):
+def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, clip_weight=0.1, eps=1.2, min_samples=2):
     """
     CLIP + DBSCAN 기반 의미-거리 그룹화
     - filtered_objects: 필터링된 객체 리스트
@@ -30,29 +29,36 @@ def cluster_by_clip_and_dbscan(filtered_objects, depth_weight=1.0, eps=1.2, min_
     - eps, min_samples: DBSCAN 파라미터
     """
 
-    # 1. get CLIP embedding
+    """
+    CLIP 임베딩 + 위치/깊이 조합한 벡터를 정규화한 뒤 DBSCAN 적용
+    """
+    # 1. CLIP 임베딩
     for obj in filtered_objects:
         obj["clip_embed"] = get_clip_embedding(obj["class_name"])
 
-    # 2. 벡터 구성: (center_x, center_y, depth, clip_embed)
+    # 2. 벡터 구성: (x, y, depth, clip_vector)
     vectors = []
     for obj in filtered_objects:
         x, y = obj["center"]
         d = obj["depth"] * depth_weight
-        clip_vec = obj["clip_embed"]
-        vec = np.concatenate([[x, y, d], clip_vec])
+        clip_vec = obj["clip_embed"] * clip_weight  # clip 영향 확대
+        vec = np.concatenate([[x, y, d], clip_vec])  # shape (515,)
         vectors.append(vec)
 
-    vectors = np.array(vectors)  # shape: (N, 3+512)
+    vectors = np.array(vectors)
 
-    # 3. DBSCAN clustering
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(vectors)
+    # ✅ 3. Standardization 적용 (위치/임베딩 scale 통일)
+    scaler = StandardScaler()
+    vectors_scaled = scaler.fit_transform(vectors)
+
+    # ✅ 4. DBSCAN 적용
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(vectors_scaled)
     labels = clustering.labels_
 
     for i, obj in enumerate(filtered_objects):
         obj["cluster_id"] = labels[i]
 
-    print(f"DBSCAN + CLIP clustering done: 총 {len(set(labels)) - (1 if -1 in labels else 0)} groups")
+    print(f"[INFO] DBSCAN + CLIP: {len(set(labels)) - (1 if -1 in labels else 0)} clusters formed")
     return filtered_objects
 
 def draw_clustered_objects(image, clustered_objects, save_path="output/clustered_result.jpg"):
