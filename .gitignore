@@ -10,6 +10,8 @@ segmentation-main/sample/
 # COCO dataset 
 COCO/images/
 COCO/annotations/
+Depth-Anything-V2/
+depth_anything_v2/
 
 # python 가상환경 
 # Created by https://www.toptal.com/developers/gitignore/api/venv,python
