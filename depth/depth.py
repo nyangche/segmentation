@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 current_dir = os.path.dirname(__file__)
 depth_anything_path = os.path.join(current_dir, '..', 'Depth-Anything-V2')
-sys.path.append(os.path.abspath(depth_anything_path))
+sys.path.append(depth_anything_path)
 
 from depth_anything_v2.dpt import DepthAnythingV2
 
@@ -29,10 +29,7 @@ def load_depth_model(encoder='vits', ckpt_filename='depth_anything_v2_vits.pth')
 def infer_depth(model, image_bgr):
     return model.infer_image(image_bgr)
 
-def save_depth_map(depth_map, save_path=None):
-    if save_path is None:
-        return 
-
+def save_depth_map(depth_map, save_path="output/depth_map.png"):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     depth_norm = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min() + 1e-8)
     plt.imsave(save_path, depth_norm, cmap='inferno')
