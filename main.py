@@ -4,6 +4,9 @@ from instance_grouping import assign_instance_ids
 import os
 from datetime import datetime
 from summary_utils import save_summary_txt
+from segmentation import segment_instance_groups, overlay_instance_segmentation_sam
+
+
 
 
 def make_output_folder(base_dir="output"):
@@ -17,7 +20,7 @@ if __name__ == "__main__":
     output_dir = make_output_folder()
 
     # 1. Depth Estimation + Object Detection + Filtering
-    analyze = SceneAnalyze("sample/example11.jpg", output_dir=output_dir)
+    analyze = SceneAnalyze("sample/example.png", output_dir=output_dir)
     analyze.run()
 
 
@@ -36,3 +39,8 @@ if __name__ == "__main__":
     # Summary text file 저장
     summary_path = os.path.join(output_dir, "summary.txt")
     save_summary_txt(grouped_objects, grouped_with_instance, save_path=summary_path)
+
+    # 4. SAM: Segmentation + Overlay 시각화
+    segmentation_path = os.path.join(output_dir, "sam_seg_result.png")
+    segment_instance_groups(analyze.image, grouped_with_instance, segmentation_path)
+    overlay_instance_segmentation_sam(analyze.img_path, segmentation_path, os.path.join(output_dir, "overlay.png"))

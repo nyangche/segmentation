@@ -14,8 +14,8 @@ from depth_anything_v2.dpt import DepthAnythingV2
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model_configs = {
-    'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
-    'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
+    'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}, 
+    'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]}, 
 }
 
 def load_depth_model(encoder='vits', ckpt_filename='depth_anything_v2_vits.pth'):

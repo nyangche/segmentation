@@ -24,7 +24,7 @@ def get_clip_embedding(text):
     return embeddings.squeeze().cpu().numpy()  # shape: (512,)
 
 
-def cluster_by_clip_and_dbscan(filtered_objects, image, depth_weight=1.0, eps=3.5, min_samples=2):
+def cluster_by_clip_and_dbscan(filtered_objects, image, depth_weight=3.0, eps=3.5, min_samples=2):
 
     # CLIP + DBSCAN 기반 의미-거리 그룹화
     # - filtered_objects: 필터링된 객체 리스트
@@ -53,7 +53,7 @@ def cluster_by_clip_and_dbscan(filtered_objects, image, depth_weight=1.0, eps=3.
         clip_vec = obj["clip_embed"]
 
         clip_vec = clip_vec / np.linalg.norm(clip_vec) 
-        clip_vec = clip_vec * 10.0  
+        clip_vec = clip_vec * 8.0  
 
         vec = np.concatenate([[x, y, d], clip_vec])
         vectors.append(vec)
@@ -64,7 +64,7 @@ def cluster_by_clip_and_dbscan(filtered_objects, image, depth_weight=1.0, eps=3.
     # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(vectors)
 
     vectors = normalize(vectors)
-    clustering = DBSCAN(eps=0.3, min_samples=min_samples, metric='cosine').fit(vectors)
+    clustering = DBSCAN(eps=0.15, min_samples=min_samples, metric='cosine').fit(vectors)
 
     labels = clustering.labels_
 
