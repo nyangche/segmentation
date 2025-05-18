@@ -13,18 +13,20 @@ sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h.pth")
 sam.to(device)
 predictor = SamPredictor(sam)
 
+
 def segment_instance_groups(image, grouped_objects, output_path):
     h, w = image.shape[:2]
     mask_total = np.zeros((h, w), dtype=np.uint8)
 
     predictor.set_image(image)
 
+    # instance_id 기준으로 그룹화
     instance_groups = defaultdict(list)
     for obj in grouped_objects:
         instance_groups[obj['instance_id']].append(obj)
 
     for instance_id, objs in instance_groups.items():
-        # 객체들 각각의 bbox로 마스크 예측하고 누적
+        # 해당 instance_id 전체 마스크 누적
         instance_mask = np.zeros((h, w), dtype=np.uint8)
 
         for obj in objs:
@@ -33,26 +35,32 @@ def segment_instance_groups(image, grouped_objects, output_path):
             masks, scores, _ = predictor.predict(box=box[None, :], multimask_output=False)
             mask = masks[0].astype(np.uint8)
 
-            # 마스크 후처리
+            # 노이즈 제거하기 
             kernel = np.ones((5, 5), np.uint8)
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
             instance_mask = np.logical_or(instance_mask, mask).astype(np.uint8)
 
-
-        # 전체 마스크에 instance_id로 마킹
         mask_total = np.where((instance_mask > 0) & (mask_total == 0), instance_id + 1, mask_total)
 
     colored_mask = np.zeros((h, w, 3), dtype=np.uint8)
     np.random.seed(42)
-    colors = np.random.randint(0, 255, size=(max(instance_groups.keys()) + 2, 3), dtype=np.uint8)
-    for i in range(1, len(colors)):
-        colored_mask[mask_total == i] = colors[i]
+    instance_ids = list(instance_groups.keys())
+    colors = {
+        instance_id + 1: np.random.randint(0, 255, size=3).tolist()
+        for instance_id in instance_ids
+    }
+
+    for inst_id, color in colors.items():
+        colored_mask[mask_total == inst_id] = color
+
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     cv2.imwrite(output_path, colored_mask)
     print(f"Segmentation result saved to: {output_path}")
+
+
 
 
 def overlay_instance_segmentation_sam(img_path, segmentation_path, save_path="overlay.png"):

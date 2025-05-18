@@ -20,7 +20,7 @@ if __name__ == "__main__":
     output_dir = make_output_folder()
 
     # 1. Depth Estimation + Object Detection + Filtering
-    analyze = SceneAnalyze("sample/example.png", output_dir=output_dir)
+    analyze = SceneAnalyze("sample/ex1.jpg", output_dir=output_dir)
     analyze.run()
 
 
