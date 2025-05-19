@@ -1,5 +1,6 @@
 from scene_analyze import SceneAnalyze
-from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects
+from gpt_connection import get_target_class_from_prompt 
+from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects, draw_focus_instance_blur_rest
 from instance_grouping import assign_instance_ids
 import os
 from datetime import datetime
@@ -58,6 +59,23 @@ if __name__ == "__main__":
 
     total_end = time.time()
     log_lines.append(f"Total Time: {total_end - total_start:.2f} sec")
+
+    # 5. Text-based Emphasis
+    t9 = time.time()
+    user_prompt = input("어떤 객체를 강조할까요? 예: 사람만 강조해줘\n")
+    target_class = get_target_class_from_prompt(user_prompt)
+    draw_focus_instance_blur_rest(
+        analyze.image,
+        grouped_with_instance,
+        focus_class_name=target_class,
+        save_path=os.path.join(output_dir, "focused_blur.jpg")
+    )
+    t10 = time.time()
+    log_lines.append(f"[5] Focus + Blur (GPT): {t10 - t9:.2f} sec")
+
+    total_end = time.time()
+    log_lines.append(f"Total Time: {total_end - total_start:.2f} sec")
+
 
     # Summary 저장
     summary_path = os.path.join(output_dir, "summary.txt")
