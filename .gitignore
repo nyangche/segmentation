@@ -1,0 +1,10 @@
+# Ignore output images
+output/
+sample/
+grouping/
+dataset/
+coco_150/
+output_gnn/
+output_transformer/
+debug_heatmap/
+sam_vit_h.pth
