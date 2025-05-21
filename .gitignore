@@ -1,4 +1,4 @@
-# Ignore output images
+# Ignore
 output/
 sample/
 grouping/
@@ -8,3 +8,4 @@ output_gnn/
 output_transformer/
 debug_heatmap/
 sam_vit_h.pth
+.env

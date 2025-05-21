@@ -62,14 +62,12 @@ if __name__ == "__main__":
 
     # 5. Text-based Emphasis
     t9 = time.time()
-    user_prompt = input("어떤 객체를 강조할까요? 예: 사람만 강조해줘\n")
-    target_class = get_target_class_from_prompt(user_prompt)
-    draw_focus_instance_blur_rest(
-        analyze.image,
-        grouped_with_instance,
-        focus_class_name=target_class,
-        save_path=os.path.join(output_dir, "focused_blur.jpg")
-    )
+    user_prompt = input("어떤 객체를 강조할까요? 예) 사람, 고양이 등: ")
+    class_names = [obj["class_name"] for obj in grouped_with_instance]
+    target_class = get_target_class_from_prompt(user_prompt, class_names)
+
+    draw_focus_instance_blur_rest(analyze.image, grouped_with_instance, target_class,
+                              save_path=os.path.join(output_dir, "focus_blur_result.jpg"))
     t10 = time.time()
     log_lines.append(f"[5] Focus + Blur (GPT): {t10 - t9:.2f} sec")
 
