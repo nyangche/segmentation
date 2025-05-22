@@ -103,29 +103,3 @@ def draw_clustered_objects(image, clustered_objects, save_path="output/clustered
     print(f"clustering visualization saved: {save_path}")
 
 
-
-def draw_focus_instance_blur_rest(image, clustered_objects, focus_class_name, save_path="output/focus_result.jpg"):
-    image_vis = image.copy()
-    blurred = cv2.GaussianBlur(image_vis, (55, 55), 0)
-    h, w = image.shape[:2]
-    mask = np.zeros((h, w), dtype=np.uint8)
-
-    color = [random.randint(0, 255) for _ in range(3)]
-
-    for obj in clustered_objects:
-        x1, y1, x2, y2 = obj["bbox"]
-        cls_name = obj["class_name"]
-
-        if cls_name == focus_class_name:
-            
-            cv2.rectangle(image_vis, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(image_vis, cls_name, (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-            mask[y1:y2, x1:x2] = 1
-
-    # blurring
-    result = np.where(mask[:, :, None] == 1, image_vis, blurred)
-
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    cv2.imwrite(save_path, result)
-    print(f"Focused result saved to {save_path}")

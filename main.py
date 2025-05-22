@@ -1,12 +1,12 @@
 from scene_analyze import SceneAnalyze
 from gpt_connection import get_target_class_from_prompt 
-from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects, draw_focus_instance_blur_rest
+from grouping import cluster_by_clip_and_dbscan, draw_clustered_objects 
 from instance_grouping import assign_instance_ids
 import os
 from datetime import datetime
 from summary_utils import save_summary_txt
 from segmentation import segment_instance_groups, overlay_instance_segmentation_sam
-
+from blurring import draw_focus_overlay_by_class
 
 
 
@@ -66,8 +66,13 @@ if __name__ == "__main__":
     class_names = [obj["class_name"] for obj in grouped_with_instance]
     target_class = get_target_class_from_prompt(user_prompt, class_names)
 
-    draw_focus_instance_blur_rest(analyze.image, grouped_with_instance, target_class,
-                              save_path=os.path.join(output_dir, "focus_blur_result.jpg"))
+    overlay_path = os.path.join(output_dir, "overlay.png")
+    focus_overlay_path = os.path.join(output_dir, "focus_overlay.png")
+
+    draw_focus_overlay_by_class(analyze.img_path, os.path.join(output_dir, "sam_seg_result.png"),
+                grouped_with_instance, target_class, os.path.join(output_dir, "focus_overlay.png"))
+
+
     t10 = time.time()
     log_lines.append(f"[5] Focus + Blur (GPT): {t10 - t9:.2f} sec")
 
