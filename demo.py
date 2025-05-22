@@ -61,7 +61,7 @@ st.set_page_config(page_title="Segmentation Demo", layout="centered")
 st.title("🤔Perceive Like Humans: Semantic Instance Grouping for Image Segmentation💭")
 
 # 중간 크기의 부제목 + 모델 설명
-st.markdown("#### 김민솔 한채헌 최다빈 최혜주")
+st.markdown("#### 김민솔 최다빈 최혜주 한채헌")
 st.markdown("사용자의 자연어 의도에 따라 중요한 객체를 강조해주는 인간 중심 이미지 세그멘테이션 모델")
 
 # 구분선
