@@ -60,8 +60,7 @@ def segment_instance_groups(image, grouped_objects, output_path):
     cv2.imwrite(output_path, colored_mask)
     print(f"Segmentation result saved to: {output_path}")
 
-
-
+    return mask_total, colored_mask, colors
 
 def overlay_instance_segmentation_sam(img_path, segmentation_path, save_path="overlay.png"):
     image = cv2.imread(img_path)
@@ -106,3 +105,50 @@ def overlay_instance_segmentation_sam(img_path, segmentation_path, save_path="ov
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     cv2.imwrite(save_path, result)
     print(f"SAM overlay saved to: {save_path}")
+
+def draw_focus_overlay_by_class_sam(image_path, instance_mask_array, grouped_objects, target_class, output_path):
+    import cv2
+    import numpy as np
+    import os
+
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    h, w, _ = image.shape
+    result = image.copy()
+    dimmed_background = (image * 0.4 + 255 * 0.6).astype(np.uint8)
+
+    # ✅ 1️⃣ 강조 대상 클래스의 인스턴스 ID 수집
+    target_instance_ids = {
+        obj["instance_id"] + 1
+        for obj in grouped_objects
+        if obj["class_name"].lower().strip() == target_class.lower().strip()
+    }
+
+    if not target_instance_ids:
+        print(f"❗️강조할 클래스 '{target_class}'에 해당하는 객체가 없습니다.")
+        return
+
+    # ✅ 2️⃣ 인스턴스 마스크에서 해당 instance_id만 강조
+    focus_mask = np.isin(instance_mask_array, list(target_instance_ids)).astype(np.uint8)
+
+    # ✅ 3️⃣ 윤곽선 추출
+    contour_mask = (focus_mask * 255).astype(np.uint8)
+    contours, _ = cv2.findContours(contour_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # ✅ 4️⃣ 윤곽선 그리기
+    np.random.seed(42)
+    border_color = tuple(np.random.randint(0, 255, size=3).tolist())
+    cv2.drawContours(result, contours, -1, border_color, thickness=2)
+
+    # ✅ 5️⃣ 배경 흐림
+    for c in range(3):
+        result[:, :, c] = np.where(focus_mask == 1, result[:, :, c], dimmed_background[:, :, c])
+
+    result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    success = cv2.imwrite(output_path, result)
+    if success:
+        print(f"✅ Selective overlay saved to: {output_path}")
+    else:
+        print(f"❌ 이미지 저장 실패: {output_path}")
